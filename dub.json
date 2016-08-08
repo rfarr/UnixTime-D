@@ -1,0 +1,12 @@
+{
+    "name": "unixtime",
+    "description": "Simple portable wrapper for handling POSIX Time (ie Unix Time)",
+    "homepage": "https://github.com/rfarr/UnixTime-D",
+    "license": "ISC",
+    "authors": [
+        "Richard Farr"
+    ],
+
+    "targetName": "unixtime",
+    "targetPath": "builds"
+}

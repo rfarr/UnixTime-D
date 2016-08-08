@@ -1,0 +1,4 @@
+builds/
+.dub/
+dub.selections.*
+*.swp
