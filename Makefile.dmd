@@ -25,15 +25,5 @@ test:
 	$(DMD) -of$(TEST) $(INCLUDES) $(TEST_DFLAGS) $(SRCS)
 	$(TEST)
 
-#examples: \
-#	basic \
-#	perf
-
-#basic: lib
-#	$(DMD) -of$(BUILD)basic $(INCLUDES) $(RELEASE_DFLAGS) examples/basic.d $(LIB)
-
-#perf: lib
-#	$(DMD) -of$(BUILD)perf $(INCLUDES) $(RELEASE_DFLAGS) examples/perf.d $(LIB)
-
 clean:
 	rm -rf $(BUILD)
