@@ -27,13 +27,12 @@ import unixtime : UnixTime, UnixTimeHiRes;
 auto hiResNow = UnixTimeHiRes.now();
 
 writeln(hiResNow.seconds); // 1470292916
-writeln(hiResNow.nsecs); // 473318461
+writeln(hiResNow.nanos); // 473318461
 
 
 auto lowResNow = UnixTime.now();
 
 writeln(lowResNow.seconds); // 1470292916
-writeln(lowResNow.nsecs); // 473318461
 ```
 
 
@@ -41,47 +40,47 @@ writeln(lowResNow.nsecs); // 473318461
 
 ```d
 // Basic addition of timestamps
-UnixTime(500) + UnixTime(250) // UnixTime(750)
-UnixTime(500) + UnixTime(-750) // UnixTime(-250)
-UnixTime(time_t.max) + UnixTime(1) // overflow, throws exception
+UnixTime(500) + UnixTime(250); // UnixTime(750)
+UnixTime(500) + UnixTime(-750); // UnixTime(-250)
+UnixTime(time_t.max) + UnixTime(1); // overflow, throws exception
 
 // And subtraction
-UnixTime(500) - UnixTime(250) // UnixTime(250)
-UnixTime(500) - UnixTime(-750) // UnixTime(1250)
-UnixTime(time_t.min) - UnixTime(1) // underflow, throws exception
+UnixTime(500) - UnixTime(250); // UnixTime(250)
+UnixTime(500) - UnixTime(-750); // UnixTime(1250)
+UnixTime(time_t.min) - UnixTime(1); // underflow, throws exception
 
 // Same thing with hi res, nanos will cause seconds to roll over
-UnixTimeHiRes(500, 100) + UnixTimeHiRes(250, 250) // UnixTimeHiRese(750, 350)
-UnixTimeHiRes(500) + UnixTimeHiRes(0, -500) // UnixTime(499, 999_999_500)
-UnixTimeHiRes(time_t, 999_999_999) + UnixTime(0, 1) // overflow, throws exception
+UnixTimeHiRes(500, 100) + UnixTimeHiRes(250, 250); // UnixTimeHiRese(750, 350)
+UnixTimeHiRes(500) + UnixTimeHiRes(0, -500); // UnixTime(499, 999_999_500)
+UnixTimeHiRes(time_t.max, 999_999_999) + UnixTimeHiRes(0, 1); // overflow, throws exception
 
 // Can mix and match hi res and normal, will return hi res
-UnixTime(500) - UnixTimeRes(250) // UnixTimeHiRes(250, 0)
-UnixTimeHiRes(500, 250) - UnixTime(-750) // UnixTimeHiRes(1250, 250)
-UnixTime(time_t.min) - UnixTime(1) // underflow, throws exception
+UnixTime(500) - UnixTimeHiRes(250); // UnixTimeHiRes(250, 0)
+UnixTimeHiRes(500, 250) - UnixTime(-750); // UnixTimeHiRes(1250, 250)
+UnixTime(time_t.min) - UnixTime(1); // underflow, throws exception
 ```
 
 
 ### Parsing / Display
 
 ```d
-UnixTime.parse("123") // UnixTime(123)
-UnixTimeHiRes.parse("123.123") // UnixTimeHiRes(123, 123000000)
+UnixTime.parse("123"); // UnixTime(123)
+UnixTimeHiRes.parse("123.123"); // UnixTimeHiRes(123, 123000000)
 
-to!string(UnixTime(123)) // "123"
-to!string(UnixTimeHiRes(123, 123000000)) // "123.123000000"
+to!string(UnixTime(123)); // "123"
+to!string(UnixTimeHiRes(123, 123000000)); // "123.123000000"
 ```
 
 
 ### Conversion to/from SysTime
 
 ```d
-cast(SysTime) UnixTime(0) // SysTime(1970-Jan-1 00:00:00 UTC)
-cast(SysTime) UnixTimeHiRes(123, 123000000) // SysTime(1970-Jan-1 00:02:03.123 UTC)
-cast(SysTime) UnixTime(time_t.max) // throws exception, SysTime can't represent this timestamp
+cast(SysTime) UnixTime(0); // SysTime(1970-Jan-1 00:00:00 UTC)
+cast(SysTime) UnixTimeHiRes(123, 123000000); // SysTime(1970-Jan-1 00:02:03.123 UTC)
+cast(SysTime) UnixTime(time_t.max); // throws exception, SysTime can't represent this timestamp
 
-UnixTime(SysTime.min) // UnixTime(-984472800485)
-UnixTimeHiRes(SysTime.max) // UnixTimeHiRes(860201606885, 477580700)
+UnixTime(SysTime.min); // UnixTime(-984472800485)
+UnixTimeHiRes(SysTime.max); // UnixTimeHiRes(860201606885, 477580700)
 ```
 
 
@@ -89,14 +88,14 @@ UnixTimeHiRes(SysTime.max) // UnixTimeHiRes(860201606885, 477580700)
 
 ```d
 // Pass the clock you want as template parameter
-auto realtime = UnixTime!(ClockType.REALTIME).now();
-auto monotonic = UnixTime!(ClockType.MONOTONIC).now();
-auto boot = UnixTime!(ClockType.BOOTTIME).now();
+auto realtime = UnixTime.now!(ClockType.REALTIME)();
+auto monotonic = UnixTime.now!(ClockType.MONOTONIC)();
+auto boot = UnixTime.now!(ClockType.UPTIME)();
 
 // Also can just pass it in as a runtime parameter
-auto realtime = UnixTime.now(ClockType.REALTIME);
-auto monotonic = UnixTime.now(ClockType.MONOTONIC);
-auto boot = UnixTime.now(ClockType.BOOTTIME);
+realtime = UnixTime.now(ClockType.REALTIME);
+monotonic = UnixTime.now(ClockType.MONOTONIC);
+boot = UnixTime.now(ClockType.UPTIME);
 ```
 
 NOTE: Clock support is of course architecture and kernel dependent.

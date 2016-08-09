@@ -22,24 +22,24 @@ else static assert(false, "Unsupported OS");
 alias UnixTimeHiRes = SystemClock!true;
 alias UnixTime = SystemClock!false;
 
+enum ClockType
+{
+    REALTIME,
+    REALTIME_FAST,
+    REALTIME_PRECISE,
+    MONOTONIC,
+    MONOTONIC_FAST,
+    MONOTONIC_PRECISE,
+    UPTIME,
+    UPTIME_FAST,
+    UPTIME_PRECISE,
+    SECOND
+}
+
 @safe
 struct SystemClock(bool HiRes)
 {
     public:
-
-        enum ClockType
-        {
-            REALTIME,
-            REALTIME_FAST,
-            REALTIME_PRECISE,
-            MONOTONIC,
-            MONOTONIC_FAST,
-            MONOTONIC_PRECISE,
-            UPTIME,
-            UPTIME_FAST,
-            UPTIME_PRECISE,
-            SECOND
-        }
 
         enum Epoch = SystemClock!HiRes(0);
 
@@ -802,32 +802,32 @@ unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - CTFE now");
 
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.SECOND)();
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.REALTIME)();
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.REALTIME_FAST)();
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.REALTIME_PRECISE)();
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.MONOTONIC)();
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.MONOTONIC_FAST)();
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.MONOTONIC_PRECISE)();
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.UPTIME)();
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.UPTIME_FAST)();
-    UnixTimeHiRes.now!(UnixTimeHiRes.ClockType.UPTIME_PRECISE)();
+    UnixTimeHiRes.now!(ClockType.SECOND)();
+    UnixTimeHiRes.now!(ClockType.REALTIME)();
+    UnixTimeHiRes.now!(ClockType.REALTIME_FAST)();
+    UnixTimeHiRes.now!(ClockType.REALTIME_PRECISE)();
+    UnixTimeHiRes.now!(ClockType.MONOTONIC)();
+    UnixTimeHiRes.now!(ClockType.MONOTONIC_FAST)();
+    UnixTimeHiRes.now!(ClockType.MONOTONIC_PRECISE)();
+    UnixTimeHiRes.now!(ClockType.UPTIME)();
+    UnixTimeHiRes.now!(ClockType.UPTIME_FAST)();
+    UnixTimeHiRes.now!(ClockType.UPTIME_PRECISE)();
 }
 
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - now");
 
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.SECOND);
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.REALTIME);
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.REALTIME_FAST);
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.REALTIME_PRECISE);
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.MONOTONIC);
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.MONOTONIC_FAST);
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.MONOTONIC_PRECISE);
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.UPTIME);
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.UPTIME_FAST);
-    UnixTimeHiRes.now(UnixTimeHiRes.ClockType.UPTIME_PRECISE);
+    UnixTimeHiRes.now(ClockType.SECOND);
+    UnixTimeHiRes.now(ClockType.REALTIME);
+    UnixTimeHiRes.now(ClockType.REALTIME_FAST);
+    UnixTimeHiRes.now(ClockType.REALTIME_PRECISE);
+    UnixTimeHiRes.now(ClockType.MONOTONIC);
+    UnixTimeHiRes.now(ClockType.MONOTONIC_FAST);
+    UnixTimeHiRes.now(ClockType.MONOTONIC_PRECISE);
+    UnixTimeHiRes.now(ClockType.UPTIME);
+    UnixTimeHiRes.now(ClockType.UPTIME_FAST);
+    UnixTimeHiRes.now(ClockType.UPTIME_PRECISE);
 }
 
 unittest
@@ -940,30 +940,31 @@ unittest
 {
     writeln("[UnitTest UnixTime] - CTFE now");
 
-    UnixTime.now!(UnixTime.ClockType.SECOND)();
-    UnixTime.now!(UnixTime.ClockType.REALTIME)();
-    UnixTime.now!(UnixTime.ClockType.REALTIME_FAST)();
-    UnixTime.now!(UnixTime.ClockType.REALTIME_PRECISE)();
-    UnixTime.now!(UnixTime.ClockType.MONOTONIC)();
-    UnixTime.now!(UnixTime.ClockType.MONOTONIC_FAST)();
-    UnixTime.now!(UnixTime.ClockType.MONOTONIC_PRECISE)();
-    UnixTime.now!(UnixTime.ClockType.UPTIME)();
-    UnixTime.now!(UnixTime.ClockType.UPTIME_FAST)();
-    UnixTime.now!(UnixTime.ClockType.UPTIME_PRECISE)();
+    UnixTime.now!(ClockType.SECOND)();
+    UnixTime.now!(ClockType.REALTIME)();
+    UnixTime.now!(ClockType.REALTIME_FAST)();
+    UnixTime.now!(ClockType.REALTIME_PRECISE)();
+    UnixTime.now!(ClockType.MONOTONIC)();
+    UnixTime.now!(ClockType.MONOTONIC_FAST)();
+    UnixTime.now!(ClockType.MONOTONIC_PRECISE)();
+    UnixTime.now!(ClockType.UPTIME)();
+    UnixTime.now!(ClockType.UPTIME_FAST)();
+    UnixTime.now!(ClockType.UPTIME_PRECISE)();
 }
 
 unittest
 {
     writeln("[UnitTest UnixTime] - now");
 
-    UnixTime.now(UnixTime.ClockType.SECOND);
-    UnixTime.now(UnixTime.ClockType.REALTIME);
-    UnixTime.now(UnixTime.ClockType.REALTIME_FAST);
-    UnixTime.now(UnixTime.ClockType.REALTIME_PRECISE);
-    UnixTime.now(UnixTime.ClockType.MONOTONIC);
-    UnixTime.now(UnixTime.ClockType.MONOTONIC_FAST);
-    UnixTime.now(UnixTime.ClockType.MONOTONIC_PRECISE);
-    UnixTime.now(UnixTime.ClockType.UPTIME);
-    UnixTime.now(UnixTime.ClockType.UPTIME_FAST);
-    UnixTime.now(UnixTime.ClockType.UPTIME_PRECISE);
+    UnixTime.now(ClockType.SECOND);
+    UnixTime.now(ClockType.REALTIME);
+    UnixTime.now(ClockType.REALTIME_FAST);
+    UnixTime.now(ClockType.REALTIME_PRECISE);
+    UnixTime.now(ClockType.MONOTONIC);
+    UnixTime.now(ClockType.MONOTONIC_FAST);
+    UnixTime.now(ClockType.MONOTONIC_PRECISE);
+    UnixTime.now(ClockType.UPTIME);
+    UnixTime.now(ClockType.UPTIME_FAST);
+    UnixTime.now(ClockType.UPTIME_PRECISE);
 }
+
