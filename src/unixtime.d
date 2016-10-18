@@ -883,6 +883,64 @@ unittest
 
 unittest
 {
+    writeln("[UnitTest UnixTime] - constructor");
+
+    auto time = UnixTime(0);
+    assert(time.seconds == 0);
+
+    time = UnixTime(500);
+    assert(time.seconds == 500);
+
+    time = UnixTime(-500);
+    assert(time.seconds == -500);
+}
+
+unittest
+{
+    writeln("[UnitTest UnixTime] - SysTime constructor");
+
+    auto sysTime = SysTime(UnixTime.UNIX_EPOCH_IN_STDTIME);
+    auto time = UnixTime(sysTime);
+    assert(time.seconds == 0);
+
+    sysTime = SysTime(UnixTime.UNIX_EPOCH_IN_STDTIME + 1);
+    time = UnixTime(sysTime);
+    assert(time.seconds == 0);
+
+    sysTime = SysTime(UnixTime.UNIX_EPOCH_IN_STDTIME - 1);
+    time = UnixTime(sysTime);
+    assert(time.seconds == 0);
+
+    sysTime = SysTime(UnixTime.UNIX_EPOCH_IN_STDTIME + 10_000_000);
+    time = UnixTime(sysTime);
+    assert(time.seconds == 1);
+
+    sysTime = SysTime(UnixTime.UNIX_EPOCH_IN_STDTIME - 10_000_000);
+    time = UnixTime(sysTime);
+    assert(time.seconds == -1);
+
+    sysTime = SysTime.min;
+    time = UnixTime(sysTime);
+    assert(time.seconds == -984472800485);
+
+    sysTime = SysTime.max;
+    time = UnixTime(sysTime);
+    assert(time.seconds == 860201606885);
+}
+
+unittest
+{
+    writeln("[UnixTest UnixTime] - parse");
+
+    assert(UnixTime.parse("0") == UnixTime(0));
+    assert(UnixTime.parse("-0") == UnixTime(0));
+    assert(UnixTime.parse("1") == UnixTime(1));
+    assert(UnixTime.parse("-1") == UnixTime(-1));
+}
+
+
+unittest
+{
     writeln("[UnitTest UnixTime] - opAdd");
 
     assert(UnixTime(0) + UnixTime(100) == UnixTime(100));
@@ -951,21 +1009,59 @@ unittest
 
 unittest
 {
-    writeln("[UnixTest UnixTime] - parse");
+    writeln("[UnitTest UnixTime] - opCast Systime");
 
-    assert(UnixTime.parse("0") == UnixTime(0));
-    assert(UnixTime.parse("-0") == UnixTime(0));
-    assert(UnixTime.parse("1") == UnixTime(1));
-    assert(UnixTime.parse("-1") == UnixTime(-1));
+    enum hnsecsToUnixEpoch = UnixTime.unixTimeToStdTime(0);
+
+    auto time = UnixTime(0);
+    SysTime systime = cast(SysTime)time;
+    assert(systime.toUnixTime() == 0);
+    assert(systime.stdTime == hnsecsToUnixEpoch);
+
+    time = UnixTime(5_000);
+    systime = cast(SysTime)time;
+    assert(systime.toUnixTime() == time.seconds);
+    assert(systime.stdTime == hnsecsToUnixEpoch + convert!("seconds", "hnsecs")(time.seconds));
+
+    time = UnixTime(1_470_014_173);
+    systime = cast(SysTime)time;
+    assert(systime.toUnixTime() == time.seconds);
+    assert(systime.stdTime == hnsecsToUnixEpoch + convert!("seconds", "hnsecs")(time.seconds));
+
+    time = UnixTime(SysTime.max().toUnixTime());
+    systime = cast(SysTime)time;
+    assert(systime.toUnixTime() == time.seconds);
+    assert(systime.stdTime == hnsecsToUnixEpoch + convert!("seconds", "hnsecs")(time.seconds));
+
+    time = UnixTime(SysTime.max().toUnixTime());
+    systime = cast(SysTime)time;
+    assert(systime.toUnixTime() == time.seconds);
+    assert(systime.stdTime == hnsecsToUnixEpoch + convert!("seconds", "hnsecs")(time.seconds));
+
+    time = UnixTime(SysTime.min().toUnixTime());
+    systime = cast(SysTime)time;
+    assert(systime.toUnixTime() == time.seconds);
+    //TODO fix when phobos bug fixed
+    //assert(systime.stdTime == hnsecsToUnixEpoch - convert!("seconds", "hnsecs")(time.seconds));
+
+    //time = UnixTime(SysTime.min().toUnixTime());
+    //systime = cast(SysTime)time;
+    //assert(systime.toUnixTime() == time.seconds);
+    //assert(systime.stdTime == hnsecsToUnixEpoch - convert!("seconds", "hnsecs")(time.seconds));
 }
 
 unittest
 {
-    writeln("[UnitTest UnixTime] - toString");
+    writeln("[UnitTest UnixTime] - opCast time_t");
 
-    assert(UnixTime.Epoch.toString() == "0");
-    assert(UnixTime(100).toString() == "100");
-    assert(UnixTime(-100).toString() == "-100");
+    auto time = UnixTime(0);
+    assert(cast(time_t)time == 0);
+
+    time = UnixTime(time_t.max);
+    assert(cast(time_t)time == time_t.max);
+
+    time = UnixTime(time_t.min);
+    assert(cast(time_t)time == time_t.min);
 }
 
 unittest
@@ -999,6 +1095,16 @@ unittest
     UnixTime.now(ClockType.UPTIME_FAST);
     UnixTime.now(ClockType.UPTIME_PRECISE);
 }
+
+unittest
+{
+    writeln("[UnitTest UnixTime] - toString");
+
+    assert(UnixTime.Epoch.toString() == "0");
+    assert(UnixTime(100).toString() == "100");
+    assert(UnixTime(-100).toString() == "-100");
+}
+
 
 unittest
 {
