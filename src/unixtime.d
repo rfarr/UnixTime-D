@@ -197,6 +197,22 @@ struct SystemClock(bool HiRes)
                     return UnixTimeHiRes(seconds);
                 }
             }
+
+            @nogc
+            pure nothrow int opCmp(const UnixTimeHiRes other) const
+            {
+                return this.opCmp(other);
+            }
+
+            @nogc
+            pure nothrow int opCmp(const ref UnixTimeHiRes other) const
+            {
+                return this.seconds > other.seconds ? 1
+                     : this.seconds < other.seconds ? -1
+                     : this.nanos > other.nanos ? 1
+                     : this.nanos < other.nanos ? -1
+                     : 0;
+            }
         }
         else
         {
@@ -234,6 +250,20 @@ struct SystemClock(bool HiRes)
             pure UnixTimeHiRes opSub(const ref UnixTimeHiRes other) const
             {
                 return cast(UnixTimeHiRes) this - other;
+            }
+
+            @nogc
+            pure nothrow int opCmp(const UnixTime other) const
+            {
+                return this.opCmp(other);
+            }
+
+            @nogc
+            pure nothrow int opCmp(const ref UnixTime other) const
+            {
+                return this.seconds > other.seconds ? 1
+                    : this.seconds < other.seconds ? -1
+                    : 0;
             }
         }
 
@@ -883,6 +913,27 @@ unittest
 
 unittest
 {
+    writeln("[UnitTest UnixTimeHiRes] - opCmp");
+
+    assert(UnixTimeHiRes(1) > UnixTimeHiRes(0));
+    assert(UnixTimeHiRes(1) == UnixTimeHiRes(1));
+    assert(UnixTimeHiRes(1) < UnixTimeHiRes(2));
+
+    assert(UnixTimeHiRes(-1) > UnixTimeHiRes(-2));
+    assert(UnixTimeHiRes(-1) == UnixTimeHiRes(-1));
+    assert(UnixTimeHiRes(-1) < UnixTimeHiRes(0));
+
+    assert(UnixTimeHiRes(1, 1) > UnixTimeHiRes(1, 0));
+    assert(UnixTimeHiRes(1, 1) == UnixTimeHiRes(1, 1));
+    assert(UnixTimeHiRes(1, 1) < UnixTimeHiRes(1, 2));
+
+    assert(UnixTimeHiRes(-1, -1) > UnixTimeHiRes(-1, -2));
+    assert(UnixTimeHiRes(-1, -1) == UnixTimeHiRes(-1, -1));
+    assert(UnixTimeHiRes(-1, -1) < UnixTimeHiRes(-1, 0));
+}
+
+unittest
+{
     writeln("[UnitTest UnixTime] - constructor");
 
     auto time = UnixTime(0);
@@ -1114,4 +1165,17 @@ unittest
     assertThrown!ErrnoException(UnixTime.now(-1));
 
     UnixTime.now(CLOCK_REALTIME);
+}
+
+unittest
+{
+    writeln("[UnitTest UnixTime] - opCmp");
+
+    assert(UnixTime(1) > UnixTime(0));
+    assert(UnixTime(1) == UnixTime(1));
+    assert(UnixTime(1) < UnixTime(2));
+
+    assert(UnixTime(-1) > UnixTime(-2));
+    assert(UnixTime(-1) == UnixTime(-1));
+    assert(UnixTime(-1) < UnixTime(0));
 }
