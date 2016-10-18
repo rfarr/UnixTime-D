@@ -305,6 +305,13 @@ struct SystemClock(bool HiRes)
                 clockGettime(clockType, timestamp.seconds, timestamp.nanos);
                 return timestamp;
             }
+
+            static UnixTimeHiRes now(clockid_t clock)
+            {
+                UnixTimeHiRes timestamp;
+                clockGettime(clock, timestamp.seconds, timestamp.nanos);
+                return timestamp;
+            }
         }
         else
         {
@@ -320,33 +327,23 @@ struct SystemClock(bool HiRes)
                 clockGettime(clockType, timestamp.seconds, nanos);
                 return timestamp;
             }
+
+            static UnixTime now(clockid_t clockId)
+            {
+                UnixTime timestamp;
+                long nanos;
+                clockGettime(clockId, timestamp.seconds, nanos);
+                return timestamp;
+            }
         }
 
         @trusted
-        static void clockGettime(ClockType clockType, out time_t seconds, out long nanos)
+        static void clockGettime(const clockid_t clockId, out time_t seconds, out long nanos)
         {
             version(linux)
             {
-                if(clockType == ClockType.SECOND)
-                {
-                    seconds = core.stdc.time.time(null);
-                }
-                else
-                {
-                    timespec ts;
-                    if(clock_gettime(getArchClock(clockType), &ts) != 0)
-                    {
-                        throw new ErrnoException("Call to clock_gettime() failed");
-                    }
-
-                    seconds = ts.tv_sec;
-                    nanos = ts.tv_nsec;
-                }
-            }
-            else version(FreeBSD)
-            {
                 timespec ts;
-                if(clock_gettime(getArchClock(clockType), &ts) != 0)
+                if(clock_gettime(clockId, &ts) != 0)
                 {
                     throw new ErrnoException("Call to clock_gettime() failed");
                 }
@@ -354,6 +351,24 @@ struct SystemClock(bool HiRes)
                 seconds = ts.tv_sec;
                 nanos = ts.tv_nsec;
             }
+            else version(FreeBSD)
+            {
+                timespec ts;
+                if(clock_gettime(clockId, &ts) != 0)
+                {
+                    throw new ErrnoException("Call to clock_gettime() failed");
+                }
+
+                seconds = ts.tv_sec;
+                nanos = ts.tv_nsec;
+            }
+        }
+
+        
+        @trusted
+        static void clockGettime(ClockType clockType, out time_t seconds, out long nanos)
+        {
+            clockGettime(getArchClock(clockType), seconds, nanos);
         }
 
     private:
@@ -858,6 +873,16 @@ unittest
 
 unittest
 {
+    writeln("[UnitTest UnixTimeHiRes] - now with clock_id");
+
+    // Invalid clockid_t
+    assertThrown!ErrnoException(UnixTimeHiRes.now(-1));
+
+    UnixTimeHiRes.now(CLOCK_REALTIME);
+}
+
+unittest
+{
     writeln("[UnitTest UnixTime] - opAdd");
 
     assert(UnixTime(0) + UnixTime(100) == UnixTime(100));
@@ -973,4 +998,14 @@ unittest
     UnixTime.now(ClockType.UPTIME);
     UnixTime.now(ClockType.UPTIME_FAST);
     UnixTime.now(ClockType.UPTIME_PRECISE);
+}
+
+unittest
+{
+    writeln("[UnitTest UnixTime] - now with clock_id");
+
+    // Invalid clockid_t
+    assertThrown!ErrnoException(UnixTime.now(-1));
+
+    UnixTime.now(CLOCK_REALTIME);
 }
