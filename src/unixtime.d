@@ -1,7 +1,6 @@
 module unixtime;
 
 import core.checkedint : adds, subs, muls;
-import core.stdc.time;
 import core.sys.posix.sys.time : time_t;
 import core.time : dur, convert;
 
@@ -46,10 +45,11 @@ struct SystemClock(bool HiRes)
         time_t seconds;
         static if (HiRes)
         {
-            long nanos ;
+            long nanos;
         }
 
-        pure this(time_t seconds)
+        @nogc
+        pure nothrow this(time_t seconds)
         {
             this.seconds = seconds;
         }
@@ -70,12 +70,12 @@ struct SystemClock(bool HiRes)
             }
         }
 
-        pure this(const SysTime sysTime)
+        pure nothrow this(const SysTime sysTime)
         {
             this(sysTime);
         }
 
-        pure this(const ref SysTime sysTime)
+        pure nothrow this(const ref SysTime sysTime)
         {
             this.seconds = stdTimeToUnixTime(sysTime.stdTime);
             static if (HiRes)
@@ -122,7 +122,8 @@ struct SystemClock(bool HiRes)
 
         static if (HiRes)
         {
-            pure UnixTime opCast(T)() const if (is(T == UnixTime))
+            @nogc
+            pure nothrow UnixTime opCast(T)() const if (is(T == UnixTime))
             {
                 return UnixTime(this.seconds);
             }
@@ -199,7 +200,8 @@ struct SystemClock(bool HiRes)
         }
         else
         {
-            pure UnixTimeHiRes opCast(T)() const if (is(T == UnixTimeHiRes))
+            @nogc
+            pure nothrow UnixTimeHiRes opCast(T)() const if (is(T == UnixTimeHiRes))
             {
                 return UnixTimeHiRes(this.seconds);
             }
@@ -235,7 +237,7 @@ struct SystemClock(bool HiRes)
             }
         }
 
-        pure string toString()() const if (!HiRes)
+        pure nothrow string toString()() const if (!HiRes)
         {
             return to!string(this.seconds);
         }
@@ -254,6 +256,7 @@ struct SystemClock(bool HiRes)
             catch (Exception e)
             {
             }
+
             throw new StringException("Invalid timestamp: " ~ timestamp);
         }
 
@@ -262,6 +265,7 @@ struct SystemClock(bool HiRes)
             try
             {
                 auto parts = timestamp.split(".");
+
                 if (parts.length == 1)
                 {
                     return UnixTimeHiRes(to!time_t(parts[0]));
@@ -284,6 +288,7 @@ struct SystemClock(bool HiRes)
             catch (Exception e)
             {
             }
+
             throw new StringException("Invalid timestamp: " ~ timestamp);
         }
 
@@ -359,7 +364,8 @@ struct SystemClock(bool HiRes)
         static immutable enum MIN_STDTIME_IN_UNIXTIME = stdTimeToUnixTime(SysTime.min.stdTime);
         static immutable enum MAX_STDTIME_IN_UNIXTIME = stdTimeToUnixTime(SysTime.max.stdTime);
 
-        pure static time_t stdTimeToUnixTime(long stdTime)
+        @nogc
+        pure nothrow static time_t stdTimeToUnixTime(long stdTime)
         {
             // Need to do some massaging to prevent underflow in this case
             if (stdTime < long.min + UNIX_EPOCH_IN_STDTIME)
@@ -372,7 +378,8 @@ struct SystemClock(bool HiRes)
             }
         }
 
-        pure static long unixTimeToStdTime(time_t unixTime)
+        @nogc
+        pure nothrow static long unixTimeToStdTime(time_t unixTime)
         {
             return unixTime * 10_000_000 + UNIX_EPOCH_IN_STDTIME;
         }
@@ -967,4 +974,3 @@ unittest
     UnixTime.now(ClockType.UPTIME_FAST);
     UnixTime.now(ClockType.UPTIME_PRECISE);
 }
-
