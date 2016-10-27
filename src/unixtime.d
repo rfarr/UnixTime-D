@@ -1,7 +1,7 @@
 module unixtime;
 
 import core.checkedint : adds, subs, muls;
-import core.sys.posix.sys.time : time_t;
+import core.sys.posix.sys.time : time_t, timespec;
 import core.time : dur, convert;
 
 import std.conv : to;
@@ -13,10 +13,85 @@ import std.string : split, StringException;
 import std.traits : Unqual;
 
 
-// TODO windows, OSX, other BSDes, Solaris
-version (linux) import core.sys.linux.time;
-else version (FreeBSD) import core.sys.freebsd.time;
-else static assert(false, "Unsupported OS");
+// TODO windows, other BSDes, Solaris
+version (linux)
+{
+    import core.sys.linux.time;
+}
+else version (FreeBSD)
+{
+    import core.sys.freebsd.time;
+}
+else version (darwin)
+{
+    // TODO support Sierra native clock_gettime
+    version = EmulatedDarwin;
+}
+else
+{
+    static assert(false, "Unsupported OS");
+}
+
+version (EmulatedDarwin)
+{
+    import core.sys.posix.sys.time : timeval, gettimeofday;
+
+    extern (C) nothrow @nogc
+    {
+        ulong mach_absolute_time();
+
+        struct mach_timebase_info_data_t
+        {
+            uint numer;
+            uint denom;
+        }
+
+        int mach_timebase_info(immutable mach_timebase_info_data_t*);
+
+        void clock_get_uptime(ulong*);
+    }
+
+    // some hackery to define clockid_t if not already defined
+    static if (!__traits(compiles, clockid_t))
+    {
+        alias clockid_t = int;
+
+        immutable clockid_t CLOCK_REALTIME = 1;
+        immutable clockid_t CLOCK_MONOTONIC = 2;
+        immutable clockid_t CLOCK_SECOND = 3;
+    }
+
+    // Used to measure elapsed nanos since program start up
+    static immutable ulong darwinTimeInit;
+
+    // Used to determine program start up time
+    static immutable timespec darwinTimespecInit;
+
+    // Used to convert darwin mach ticks to actual time
+    static immutable mach_timebase_info_data_t darwinTimebaseInfo;
+
+    static this()
+    {
+        darwinTimeInit = mach_absolute_time();
+
+        timeval tv;
+        if (gettimeofday(&tv, null) == 0)
+        {
+            timespec ts;
+            darwinTimespecInit.tv_sec = tv.tv_sec;
+            darwinTimespecInit.tv_nsec = tv.tv_usec * 1000;
+        }
+        else
+        {
+            assert(false, "Unable to initialize clock");
+        }
+
+        if (mach_timebase_info(&darwinTimebaseInfo) != 0)
+        {
+            assert(false, "Unable to initialize timebase info");
+        }
+    }
+}
 
 alias UnixTimeHiRes = SystemClock!true;
 alias UnixTime = SystemClock!false;
@@ -34,6 +109,7 @@ enum ClockType
     UPTIME_PRECISE,
     SECOND
 }
+
 
 @safe
 struct SystemClock(bool HiRes)
@@ -392,6 +468,42 @@ struct SystemClock(bool HiRes)
                 seconds = ts.tv_sec;
                 nanos = ts.tv_nsec;
             }
+            else version(EmulatedDarwin)
+            {
+                if (clockId == CLOCK_REALTIME)
+                {
+                    auto elapsedNanos = (mach_absolute_time() - darwinTimeInit) * darwinTimebaseInfo.numer / darwinTimebaseInfo.denom;
+
+                    seconds = darwinTimespecInit.tv_sec + elapsedNanos / NANOS_IN_SECOND;
+                    nanos = darwinTimespecInit.tv_nsec + elapsedNanos % NANOS_IN_SECOND;
+                }
+                else if (clockId == CLOCK_MONOTONIC)
+                {
+                    auto elapsedNanos = mach_absolute_time() * darwinTimebaseInfo.numer / darwinTimebaseInfo.denom;
+
+                    seconds = elapsedNanos / NANOS_IN_SECOND;
+                    nanos = elapsedNanos % NANOS_IN_SECOND;
+                }
+                else if (clockId == CLOCK_SECOND)
+                {
+                    timeval tv;
+                    if(gettimeofday(&tv, null) != 0)
+                    {
+                        throw new Exception("Call to gettimeofday() failed");
+                    }
+
+                    seconds = tv.tv_sec;
+                    nanos = 0;
+                }
+                else
+                {
+                    throw new Exception("Unsupported emulated clockid_t: " ~ to!string(clockId));
+                }
+            }
+            else
+            {
+                assert(false, "Unsupported OS");
+            }
         }
 
         
@@ -467,6 +579,29 @@ struct SystemClock(bool HiRes)
                     default:
                         assert(false, "ClockType=" ~ to!string(clockType) ~ " not supported on this platform");
                 }
+            }
+            else version (EmulatedDarwin)
+            {
+                switch(clockType)
+                {
+                    case (ClockType.REALTIME):              return CLOCK_REALTIME;
+                    case (ClockType.MONOTONIC):             return CLOCK_MONOTONIC;
+                    case (ClockType.SECOND):                return CLOCK_SECOND;
+                    case (ClockType.REALTIME_PRECISE):
+                    case (ClockType.REALTIME_FAST):         return CLOCK_REALTIME;
+                    case (ClockType.MONOTONIC_FAST):
+                    case (ClockType.MONOTONIC_PRECISE):
+                    case (ClockType.UPTIME):
+                    case (ClockType.UPTIME_FAST):
+                    case (ClockType.UPTIME_PRECISE):        return CLOCK_MONOTONIC;
+
+                    default:
+                        assert(false, "ClockType=" ~ to!string(clockType) ~ " not supported on this platform");
+                }
+            }
+            else
+            {
+                assert(false, "Unsupported OS");
             }
         }
 
@@ -852,34 +987,34 @@ unittest
 
 unittest
 {
-    writeln("[UnitTest UnixTimeHiRes] - CTFE now");
+    writeln("[UnitTest UnixTimeHiRes] - templated now");
 
-    UnixTimeHiRes.now!(ClockType.SECOND)();
-    UnixTimeHiRes.now!(ClockType.REALTIME)();
-    UnixTimeHiRes.now!(ClockType.REALTIME_FAST)();
-    UnixTimeHiRes.now!(ClockType.REALTIME_PRECISE)();
-    UnixTimeHiRes.now!(ClockType.MONOTONIC)();
-    UnixTimeHiRes.now!(ClockType.MONOTONIC_FAST)();
-    UnixTimeHiRes.now!(ClockType.MONOTONIC_PRECISE)();
-    UnixTimeHiRes.now!(ClockType.UPTIME)();
-    UnixTimeHiRes.now!(ClockType.UPTIME_FAST)();
-    UnixTimeHiRes.now!(ClockType.UPTIME_PRECISE)();
+    cast(void) UnixTimeHiRes.now!(ClockType.SECOND)();
+    cast(void) UnixTimeHiRes.now!(ClockType.REALTIME)();
+    cast(void) UnixTimeHiRes.now!(ClockType.REALTIME_FAST)();
+    cast(void) UnixTimeHiRes.now!(ClockType.REALTIME_PRECISE)();
+    cast(void) UnixTimeHiRes.now!(ClockType.MONOTONIC)();
+    cast(void) UnixTimeHiRes.now!(ClockType.MONOTONIC_FAST)();
+    cast(void) UnixTimeHiRes.now!(ClockType.MONOTONIC_PRECISE)();
+    cast(void) UnixTimeHiRes.now!(ClockType.UPTIME)();
+    cast(void) UnixTimeHiRes.now!(ClockType.UPTIME_FAST)();
+    cast(void) UnixTimeHiRes.now!(ClockType.UPTIME_PRECISE)();
 }
 
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - now");
 
-    UnixTimeHiRes.now(ClockType.SECOND);
-    UnixTimeHiRes.now(ClockType.REALTIME);
-    UnixTimeHiRes.now(ClockType.REALTIME_FAST);
-    UnixTimeHiRes.now(ClockType.REALTIME_PRECISE);
-    UnixTimeHiRes.now(ClockType.MONOTONIC);
-    UnixTimeHiRes.now(ClockType.MONOTONIC_FAST);
-    UnixTimeHiRes.now(ClockType.MONOTONIC_PRECISE);
-    UnixTimeHiRes.now(ClockType.UPTIME);
-    UnixTimeHiRes.now(ClockType.UPTIME_FAST);
-    UnixTimeHiRes.now(ClockType.UPTIME_PRECISE);
+    cast(void) UnixTimeHiRes.now(ClockType.SECOND);
+    cast(void) UnixTimeHiRes.now(ClockType.REALTIME);
+    cast(void) UnixTimeHiRes.now(ClockType.REALTIME_FAST);
+    cast(void) UnixTimeHiRes.now(ClockType.REALTIME_PRECISE);
+    cast(void) UnixTimeHiRes.now(ClockType.MONOTONIC);
+    cast(void) UnixTimeHiRes.now(ClockType.MONOTONIC_FAST);
+    cast(void) UnixTimeHiRes.now(ClockType.MONOTONIC_PRECISE);
+    cast(void) UnixTimeHiRes.now(ClockType.UPTIME);
+    cast(void) UnixTimeHiRes.now(ClockType.UPTIME_FAST);
+    cast(void) UnixTimeHiRes.now(ClockType.UPTIME_PRECISE);
 }
 
 unittest
@@ -906,9 +1041,9 @@ unittest
     writeln("[UnitTest UnixTimeHiRes] - now with clock_id");
 
     // Invalid clockid_t
-    assertThrown!ErrnoException(UnixTimeHiRes.now(-1));
+    assertThrown!Exception(UnixTimeHiRes.now(-1));
 
-    UnixTimeHiRes.now(CLOCK_REALTIME);
+    cast(void) UnixTimeHiRes.now(CLOCK_REALTIME);
 }
 
 unittest
@@ -1117,34 +1252,34 @@ unittest
 
 unittest
 {
-    writeln("[UnitTest UnixTime] - CTFE now");
+    writeln("[UnitTest UnixTime] - templated now");
 
-    UnixTime.now!(ClockType.SECOND)();
-    UnixTime.now!(ClockType.REALTIME)();
-    UnixTime.now!(ClockType.REALTIME_FAST)();
-    UnixTime.now!(ClockType.REALTIME_PRECISE)();
-    UnixTime.now!(ClockType.MONOTONIC)();
-    UnixTime.now!(ClockType.MONOTONIC_FAST)();
-    UnixTime.now!(ClockType.MONOTONIC_PRECISE)();
-    UnixTime.now!(ClockType.UPTIME)();
-    UnixTime.now!(ClockType.UPTIME_FAST)();
-    UnixTime.now!(ClockType.UPTIME_PRECISE)();
+    cast(void) UnixTime.now!(ClockType.SECOND)();
+    cast(void) UnixTime.now!(ClockType.REALTIME)();
+    cast(void) UnixTime.now!(ClockType.REALTIME_FAST)();
+    cast(void) UnixTime.now!(ClockType.REALTIME_PRECISE)();
+    cast(void) UnixTime.now!(ClockType.MONOTONIC)();
+    cast(void) UnixTime.now!(ClockType.MONOTONIC_FAST)();
+    cast(void) UnixTime.now!(ClockType.MONOTONIC_PRECISE)();
+    cast(void) UnixTime.now!(ClockType.UPTIME)();
+    cast(void) UnixTime.now!(ClockType.UPTIME_FAST)();
+    cast(void) UnixTime.now!(ClockType.UPTIME_PRECISE)();
 }
 
 unittest
 {
     writeln("[UnitTest UnixTime] - now");
 
-    UnixTime.now(ClockType.SECOND);
-    UnixTime.now(ClockType.REALTIME);
-    UnixTime.now(ClockType.REALTIME_FAST);
-    UnixTime.now(ClockType.REALTIME_PRECISE);
-    UnixTime.now(ClockType.MONOTONIC);
-    UnixTime.now(ClockType.MONOTONIC_FAST);
-    UnixTime.now(ClockType.MONOTONIC_PRECISE);
-    UnixTime.now(ClockType.UPTIME);
-    UnixTime.now(ClockType.UPTIME_FAST);
-    UnixTime.now(ClockType.UPTIME_PRECISE);
+    cast(void) UnixTime.now(ClockType.SECOND);
+    cast(void) UnixTime.now(ClockType.REALTIME);
+    cast(void) UnixTime.now(ClockType.REALTIME_FAST);
+    cast(void) UnixTime.now(ClockType.REALTIME_PRECISE);
+    cast(void) UnixTime.now(ClockType.MONOTONIC);
+    cast(void) UnixTime.now(ClockType.MONOTONIC_FAST);
+    cast(void) UnixTime.now(ClockType.MONOTONIC_PRECISE);
+    cast(void) UnixTime.now(ClockType.UPTIME);
+    cast(void) UnixTime.now(ClockType.UPTIME_FAST);
+    cast(void) UnixTime.now(ClockType.UPTIME_PRECISE);
 }
 
 unittest
@@ -1162,9 +1297,9 @@ unittest
     writeln("[UnitTest UnixTime] - now with clock_id");
 
     // Invalid clockid_t
-    assertThrown!ErrnoException(UnixTime.now(-1));
+    assertThrown!Exception(UnixTime.now(-1));
 
-    UnixTime.now(CLOCK_REALTIME);
+    cast(void) UnixTime.now(CLOCK_REALTIME);
 }
 
 unittest
