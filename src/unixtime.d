@@ -421,12 +421,12 @@ struct SystemClock(bool HiRes)
         }
         else
         {
-            static UnixTime now(ClockType clockType = ClockType.REALTIME)()
+            static UnixTime now(ClockType clockType = ClockType.SECOND)()
             {
                 return now(clockType);
             }
 
-            static UnixTime now(ClockType clockType = ClockType.REALTIME)
+            static UnixTime now(ClockType clockType = ClockType.SECOND)
             {
                 UnixTime timestamp;
                 long nanos;
