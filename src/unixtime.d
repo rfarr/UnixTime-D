@@ -343,9 +343,9 @@ struct SystemClock(bool HiRes)
             }
         }
 
-        pure nothrow string toString()() const if (!HiRes)
+        pure string toString()() const if (!HiRes)
         {
-            return to!string(this.seconds);
+            return "%d".format(this.seconds);
         }
 
         pure string toString()() const if (HiRes)
