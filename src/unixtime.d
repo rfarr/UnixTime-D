@@ -545,10 +545,11 @@ struct SystemClock(bool HiRes)
         {
             version(linux)
             {
-                switch(clockType)
+                final switch(clockType)
                 {
                     case (ClockType.REALTIME):              return CLOCK_REALTIME;
                     case (ClockType.MONOTONIC):             return CLOCK_MONOTONIC;
+                    case (ClockType.SECOND):                return CLOCK_REALTIME;
                     case (ClockType.REALTIME_PRECISE):      return CLOCK_REALTIME;
                     case (ClockType.REALTIME_FAST):         return CLOCK_REALTIME_COARSE;
                     case (ClockType.MONOTONIC_FAST):        return CLOCK_MONOTONIC_COARSE;
@@ -556,14 +557,11 @@ struct SystemClock(bool HiRes)
                     case (ClockType.UPTIME):
                     case (ClockType.UPTIME_FAST):
                     case (ClockType.UPTIME_PRECISE):        return CLOCK_BOOTTIME;
-
-                    default:
-                        assert(false, "ClockType=" ~ to!string(clockType) ~ " not supported on this platform");
                 }
             }
             else version (FreeBSD)
             {
-                switch(clockType)
+                final switch(clockType)
                 {
                     case (ClockType.REALTIME):              return CLOCK_REALTIME;
                     case (ClockType.MONOTONIC):             return CLOCK_MONOTONIC;
@@ -575,14 +573,11 @@ struct SystemClock(bool HiRes)
                     case (ClockType.UPTIME):                return CLOCK_UPTIME;
                     case (ClockType.UPTIME_FAST):           return CLOCK_UPTIME_FAST;
                     case (ClockType.UPTIME_PRECISE):        return CLOCK_UPTIME_PRECISE;
-
-                    default:
-                        assert(false, "ClockType=" ~ to!string(clockType) ~ " not supported on this platform");
                 }
             }
             else version (EmulatedDarwin)
             {
-                switch(clockType)
+                final switch(clockType)
                 {
                     case (ClockType.REALTIME):              return CLOCK_REALTIME;
                     case (ClockType.MONOTONIC):             return CLOCK_MONOTONIC;
@@ -594,9 +589,6 @@ struct SystemClock(bool HiRes)
                     case (ClockType.UPTIME):
                     case (ClockType.UPTIME_FAST):
                     case (ClockType.UPTIME_PRECISE):        return CLOCK_MONOTONIC;
-
-                    default:
-                        assert(false, "ClockType=" ~ to!string(clockType) ~ " not supported on this platform");
                 }
             }
             else
