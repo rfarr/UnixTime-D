@@ -6,7 +6,7 @@ Simple and portable D wrapper for POSIX Time (aka Unix Time)
 ### Rationale
 
 While D has good datetime support from std.datetime, the internal representation is always
-kept in stdtime (hecto-nanoseconds since Jan 1, 0 AD).  This necessitate constant conversion
+kept in stdtime (hecto-nanoseconds since Jan 1, 0 AD).  This necessitates constant conversion
 to/from stdtime when all you want to deal with good ol' fashioned Unix Time.
 
 UnixTime also allows you to more easily get at the raw clock values on your system and allows full
@@ -102,7 +102,9 @@ NOTE: Clock support is of course architecture and kernel dependent.
 Not all clocks are available so in many cases you may get the same clock
 regardless of your ClockType.
 
-As of right now just Linux and FreeBSD are supported.
+Currently supported OSes are Linux, FreeBSD, and MacOS.  MacOS uses emulation
+to get to Unix time.  Since Sierra this should not be neccessary but I haven't
+updated the code to support it. PRs welcome :)
 
 #### Linux
 
@@ -112,7 +114,7 @@ REALTIME            |CLOCK_REALTIME             |
 MONOTONIC           |CLOCK_MONOTONIC            |
 SECOND              |(uses core.stdc.time)      |
 REALTIME_PRECISE    |CLOCK_REALTIME             |
-REALTIME_FAST       |CLOCK_REALTIME_COARSET     |
+REALTIME_FAST       |CLOCK_REALTIME_COARSE      |
 MONOTONIC_FAST      |CLOCK_MONOTONIC_COARSE     |
 MONOTONIC_PRECISE   |CLOCK_MONOTONIC_RAW        |
 UPTIME              |CLOCK_BOOTTIME             |
@@ -142,7 +144,7 @@ Richard Farr, `<richard@nxbit.io>`
 
 ### Copyright & License
 
-Copyright (c) 2016, Richard Farr
+Copyright (c) 2016-2019, Richard Farr
 Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
 THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
