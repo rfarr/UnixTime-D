@@ -204,17 +204,20 @@ struct SystemClock(bool HiRes)
                 return UnixTime(this.seconds);
             }
 
-            pure UnixTimeHiRes opAdd(const UnixTime other) const
+            pure UnixTimeHiRes opBinary(string op)(const UnixTime other) const
+            if (op == "+")
             {
                 return this + cast(UnixTimeHiRes) other.seconds;
             }
 
-            pure UnixTimeHiRes opAdd(const UnixTimeHiRes other) const
+            pure UnixTimeHiRes opBinary(string op)(const UnixTimeHiRes other) const
+            if (op == "+")
             {
-                return opAdd(other);
+                return opBinary!"+"(other);
             }
 
-            pure UnixTimeHiRes opAdd(const ref UnixTimeHiRes other) const
+            pure UnixTimeHiRes opBinary(string op)(const ref UnixTimeHiRes other) const
+            if (op == "+")
             in
             {
                 static if (HiRes)
@@ -239,17 +242,20 @@ struct SystemClock(bool HiRes)
                 }
             }
 
-            pure UnixTimeHiRes opSub(const UnixTime other) const
+            pure UnixTimeHiRes opBinary(string op)(const UnixTime other) const
+            if (op == "-")
             {
                 return this - cast(UnixTimeHiRes) other;
             }
 
-            pure UnixTimeHiRes opSub(const UnixTimeHiRes other) const
+            pure UnixTimeHiRes opBinary(string op)(const UnixTimeHiRes other) const
+            if (op == "-")
             {
-                return opSub(other);
+                return opBinary!"-"(other);
             }
 
-            pure UnixTimeHiRes opSub(const ref UnixTimeHiRes other) const
+            pure UnixTimeHiRes opBinary(string op)(const ref UnixTimeHiRes other) const
+            if (op == "-")
             in
             {
                 static if (HiRes)
@@ -298,32 +304,38 @@ struct SystemClock(bool HiRes)
                 return UnixTimeHiRes(this.seconds);
             }
 
-            pure UnixTime opAdd(const UnixTime other) const
+            pure UnixTime opBinary(string op)(const UnixTime other) const
+            if (op == "+")
             {
                 return UnixTime(safelyAddSigned(this.seconds, other.seconds));
             }
 
-            pure UnixTimeHiRes opAdd(const UnixTimeHiRes other) const
+            pure UnixTimeHiRes opBinary(string op)(const UnixTimeHiRes other) const
+            if (op == "+")
             {
-                return opAdd(other);
+                return opBinary!"+"(other);
             }
 
-            pure UnixTimeHiRes opAdd(const ref UnixTimeHiRes other) const
+            pure UnixTimeHiRes opBinary(string op)(const ref UnixTimeHiRes other) const
+            if (op == "+")
             {
                 return cast(UnixTimeHiRes) this + other;
             }
 
-            pure UnixTime opSub(const UnixTime other) const
+            pure UnixTime opBinary(string op)(const UnixTime other) const
+            if (op == "-")
             {
                 return UnixTime(safelySubSigned(this.seconds, other.seconds));
             }
 
-            pure UnixTimeHiRes opSub(const UnixTimeHiRes other) const
+            pure UnixTimeHiRes opBinary(string op)(const UnixTimeHiRes other) const
+            if (op == "-")
             {
-                return opSub(other);
+                return opBinary!"-"(other);
             }
 
-            pure UnixTimeHiRes opSub(const ref UnixTimeHiRes other) const
+            pure UnixTimeHiRes opBinary(string op)(const ref UnixTimeHiRes other) const
+            if (op == "-")
             {
                 return cast(UnixTimeHiRes) this - other;
             }
