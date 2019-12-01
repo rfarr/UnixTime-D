@@ -694,6 +694,7 @@ version(unittest)
     import core.sys.posix.sys.time : gettimeofday;
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - constructor");
@@ -717,15 +718,21 @@ unittest
     time = UnixTimeHiRes(-500, 1);
     assert(time.seconds == -499);
     assert(time.nanos == -999_999_999);
+}
+
+unittest
+{
+    writeln("[UnitTest UnixTimeHiRes] - constructor timeval");
 
     timeval tv;
     gettimeofday(&tv, null);
 
-    time = UnixTimeHiRes(tv);
+    auto time = UnixTimeHiRes(tv);
     assert(time.seconds == tv.tv_sec);
     assert(time.nanos == tv.tv_usec * 1000);
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - SysTime constructor");
@@ -766,6 +773,7 @@ unittest
     assert(time.nanos == 477580700);
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - parse");
@@ -821,6 +829,7 @@ unittest
     }
 }
 
+//@safe - assertThrow!AssertError not safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - opAdd");
@@ -886,6 +895,7 @@ unittest
     assert(sum.nanos == 0);
 }
 
+//@safe - assertThrow!AssertError not safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - opSub");
@@ -944,6 +954,7 @@ unittest
     assert(diff.nanos == 0);
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - opCast Systime");
@@ -992,6 +1003,7 @@ unittest
     //assert(systime.stdTime == hnsecsToUnixEpoch - convert!("seconds", "hnsecs")(time.seconds) - convert!("nsecs", "hnsecs")(time.nanos));
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - opCast time_t");
@@ -1006,6 +1018,7 @@ unittest
     assert(cast(time_t)time == time_t.min);
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - templated now");
@@ -1022,6 +1035,7 @@ unittest
     cast(void) UnixTimeHiRes.now!(ClockType.UPTIME_PRECISE)();
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - now");
@@ -1038,6 +1052,7 @@ unittest
     cast(void) UnixTimeHiRes.now(ClockType.UPTIME_PRECISE);
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - toString");
@@ -1057,6 +1072,7 @@ unittest
     assert(UnixTimeHiRes(100, -999999999).toString() == "99.000000001");
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - now with clock_id");
@@ -1067,6 +1083,7 @@ unittest
     cast(void) UnixTimeHiRes.now(CLOCK_REALTIME);
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTimeHiRes] - opCmp");
@@ -1088,6 +1105,7 @@ unittest
     assert(UnixTimeHiRes(-1, -1) < UnixTimeHiRes(-1, 0));
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - constructor");
@@ -1100,15 +1118,20 @@ unittest
 
     time = UnixTime(-500);
     assert(time.seconds == -500);
+}
+
+unittest
+{
+    writeln("UnitTest UnixTime] - constructor timeval");
 
     timeval tv;
     gettimeofday(&tv, null);
 
-    time = UnixTime(tv);
+    auto time = UnixTime(tv);
     assert(time.seconds == tv.tv_sec);
 }
 
-
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - SysTime constructor");
@@ -1142,6 +1165,7 @@ unittest
     assert(time.seconds == 860201606885);
 }
 
+@safe
 unittest
 {
     writeln("[UnixTest UnixTime] - parse");
@@ -1152,7 +1176,7 @@ unittest
     assert(UnixTime.parse("-1") == UnixTime(-1));
 }
 
-
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - opAdd");
@@ -1174,6 +1198,7 @@ unittest
     assertThrown!Exception(UnixTime(-1) + UnixTime(time_t.min));
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - opSub");
@@ -1195,6 +1220,7 @@ unittest
     assertThrown!Exception(UnixTime(-2) - UnixTime(time_t.max));
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - opAdd mixed");
@@ -1208,6 +1234,7 @@ unittest
     assert(UnixTimeHiRes(123, 123) + UnixTime(-123) == UnixTimeHiRes(0, 123));
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - opSub mixed");
@@ -1221,6 +1248,7 @@ unittest
     assert(UnixTimeHiRes(123, 123) - UnixTime(-123) == UnixTimeHiRes(246, 123));
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - opCast Systime");
@@ -1264,6 +1292,7 @@ unittest
     //assert(systime.stdTime == hnsecsToUnixEpoch - convert!("seconds", "hnsecs")(time.seconds));
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - opCast time_t");
@@ -1278,6 +1307,7 @@ unittest
     assert(cast(time_t)time == time_t.min);
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - templated now");
@@ -1294,6 +1324,7 @@ unittest
     cast(void) UnixTime.now!(ClockType.UPTIME_PRECISE)();
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - now");
@@ -1310,6 +1341,7 @@ unittest
     cast(void) UnixTime.now(ClockType.UPTIME_PRECISE);
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - toString");
@@ -1319,7 +1351,7 @@ unittest
     assert(UnixTime(-100).toString() == "-100");
 }
 
-
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - now with clock_id");
@@ -1330,6 +1362,7 @@ unittest
     cast(void) UnixTime.now(CLOCK_REALTIME);
 }
 
+@safe
 unittest
 {
     writeln("[UnitTest UnixTime] - opCmp");
