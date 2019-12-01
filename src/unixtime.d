@@ -1,7 +1,7 @@
 module unixtime;
 
 import core.checkedint : adds, subs, muls;
-import core.sys.posix.sys.time : time_t, timespec;
+import core.sys.posix.sys.time : time_t, timespec, timeval;
 import core.time : dur, convert;
 
 import std.conv : to;
@@ -34,7 +34,7 @@ else
 
 version (EmulatedDarwin)
 {
-    import core.sys.posix.sys.time : timeval, gettimeofday;
+    import core.sys.posix.sys.time : gettimeofday;
 
     extern (C) nothrow @nogc
     {
@@ -128,6 +128,16 @@ struct SystemClock(bool HiRes)
         pure nothrow this(time_t seconds)
         {
             this.seconds = seconds;
+        }
+
+        @nogc
+        pure nothrow this(timeval tv)
+        {
+          this.seconds = tv.tv_sec;
+          static if (HiRes)
+          {
+            this.nanos = tv.tv_usec * 1000;
+          }
         }
 
         static if (HiRes)
@@ -501,7 +511,7 @@ struct SystemClock(bool HiRes)
                     timeval tv;
                     if(gettimeofday(&tv, null) != 0)
                     {
-                        throw new Exception("Call to gettimeofday() failed");
+                        throw new ErrnoException("Call to gettimeofday() failed");
                     }
 
                     seconds = tv.tv_sec;
@@ -519,7 +529,6 @@ struct SystemClock(bool HiRes)
         }
 
         
-        @trusted
         static void clockGettime(ClockType clockType, out time_t seconds, out long nanos)
         {
             clockGettime(getArchClock(clockType), seconds, nanos);
@@ -682,6 +691,7 @@ version(unittest)
     import std.array : join;
     import std.stdio : write, writeln;
     import std.exception : assertThrown;
+    import core.sys.posix.sys.time : gettimeofday;
 }
 
 unittest
@@ -707,6 +717,13 @@ unittest
     time = UnixTimeHiRes(-500, 1);
     assert(time.seconds == -499);
     assert(time.nanos == -999_999_999);
+
+    timeval tv;
+    gettimeofday(&tv, null);
+
+    time = UnixTimeHiRes(tv);
+    assert(time.seconds == tv.tv_sec);
+    assert(time.nanos == tv.tv_usec * 1000);
 }
 
 unittest
@@ -1083,7 +1100,14 @@ unittest
 
     time = UnixTime(-500);
     assert(time.seconds == -500);
+
+    timeval tv;
+    gettimeofday(&tv, null);
+
+    time = UnixTime(tv);
+    assert(time.seconds == tv.tv_sec);
 }
+
 
 unittest
 {
