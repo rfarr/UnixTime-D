@@ -147,7 +147,7 @@ struct SystemClock(bool HiRes)
             {
                 assert(nanos.abs < NANOS_IN_SECOND);
             }
-            body
+            do
             {
                 this.seconds = seconds;
                 this.nanos = nanos;
@@ -186,7 +186,7 @@ struct SystemClock(bool HiRes)
                 assert(this.nanos.abs < NANOS_IN_SECOND);
             }
         }
-        body
+        do
         {
             enforce(this.seconds <= MAX_STDTIME_IN_UNIXTIME && this.seconds >= MIN_STDTIME_IN_UNIXTIME);
 
@@ -236,7 +236,7 @@ struct SystemClock(bool HiRes)
                     assert(other.nanos.abs < NANOS_IN_SECOND);
                 }
             }
-            body
+            do
             {
                 auto seconds = safelyAddSigned(this.seconds, other.seconds);
 
@@ -274,7 +274,7 @@ struct SystemClock(bool HiRes)
                     assert(other.nanos.abs < NANOS_IN_SECOND);
                 }
             }
-            body
+            do
             {
                 auto seconds = safelySubSigned(this.seconds, other.seconds);
 
